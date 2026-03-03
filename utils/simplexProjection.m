@@ -1,24 +1,21 @@
-function [x, mu, K] = simplexProjection(y, a)
-%PROJ_SIMPLEX  Euclidean projection of y onto the r-dim a-simplex:
-%   Delta(a) = { x >= 0, sum(x) = a }.
+function x = simplexProjection(y)
+%PROJ_SIMPLEX  Euclidean projection of y onto the r-dim 1-simplex:
+%   Delta = { x >= 0, sum(x) = 1 }.
 %
 % Inputs:
 %   y : (r x 1) vector (or 1 x r row vector)
-%   a : scalar > 0 (e.g., a = 1 for unit simplex)
 %
 % Outputs:
 %   x  : projection of y onto simplex
 %   mu : threshold (Lagrange multiplier for sum constraint)
 %   K  : number of positive components in x
+    a = 1;
 
-    if a <= 0
-        error('a must be > 0');
-    end
-    y = y(:);                 % ensure column
+    y = y(:);
     r = numel(y);
 
     % --- sort y descending
-    [ys, idx] = sort(y, 'descend');
+    [ys, ~] = sort(y, 'descend');
 
     % --- prefix sums S_k = sum_{j=1..k} y_(j)
     S = cumsum(ys);
@@ -38,8 +35,6 @@ function [x, mu, K] = simplexProjection(y, a)
         x = zeros(r,1);
         [~, imax] = max(y);
         x(imax) = a;
-        mu = NaN;
-        K = 1;
         return;
     end
 
