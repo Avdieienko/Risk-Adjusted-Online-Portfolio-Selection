@@ -1,6 +1,6 @@
-function [R, dates, P] = prepareDataset(dataDir, assets)
+function [R, dates, P] = prepareDataset(dataDir, assets, startDate, endDate)
     load_files(dataDir, assets);
     files = flipFile(dataDir, assets);
-    files = trimFiles(files, 100);
+    files = trimFilesByDate(files, startDate, endDate);
     [R, dates, P] = aggregate_price_relatives(files);
 end

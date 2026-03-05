@@ -2,15 +2,18 @@ scriptDir = fileparts(mfilename('fullpath'));
 addpath(fullfile(scriptDir, 'helpers'));
 rootDir = setup_project_paths();
 
-assets = {'GLD', 'GOOG', 'VOO'};
+assets = {'CVX', 'T', 'INTC'};
 
-[R, dates, P] = prepareDataset("dataset", assets);
+% Rebuild selected MAT files so each run starts from full CSV history.
+csvToMat("dataset", assets);
+
+[R, dates, P] = prepareDataset("dataset", assets, "01/02/2025", "01/30/2026");
 
 eta0 = 0.2;
 out = ogd_portfolio_selection(R, eta0, @(w,r) logLossFuncGradient(w,r), []);
 
 reg = compute_and_plot_regret_logwealth(R, out.W, dates);
-plotWeightsChange(out.W(1:10:end,:), assets);
+plotWeightsChange(out.W, assets, 20, dates);
 %plot_regret_with_bounds(reg, dates);
 %plot_regret_with_all_bounds(reg, dates);
 
@@ -26,7 +29,7 @@ figure;
 plot(dates(2:end), out.wealth(2:end));
 grid on;
 xlabel('Date'); ylabel('Wealth');
-title('OGD wealth from MAT data');
+title('OGD wealth');
 
 disp('test_ogd_with_matfiles passed.');
 

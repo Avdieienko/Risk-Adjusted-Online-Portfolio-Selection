@@ -1,19 +1,37 @@
-function plotWeightsChange(W, assetNames, sliceStride)
+function plotWeightsChange(W, assetNames, sliceStride, dates)
 %PLOTWEIGHTSCHANGE Plot 3-asset weight trajectory as a simplex tube in time.
 %   plotWeightsChange(W)
 %   plotWeightsChange(W, assetNames)
 %   plotWeightsChange(W, assetNames, sliceStride)
+%   plotWeightsChange(W, assetNames, sliceStride, dates)
 %
 % Inputs:
 %   W          - T x 3 portfolio weights over time
 %   assetNames - optional names for the 3 assets
 %   sliceStride- optional spacing between simplex slices in the tube
+%   dates      - optional datetime (or datenum/string) vector of length T or T+1
 
     if nargin < 2 || isempty(assetNames)
         assetNames = {'Asset 1', 'Asset 2', 'Asset 3'};
     end
+    if nargin < 4
+        dates = [];
+    end
+
+    % Backward-compatible overload: plotWeightsChange(W, assetNames, dates)
+    if nargin >= 3 && ~isempty(sliceStride)
+        isValidStride = isnumeric(sliceStride) && isscalar(sliceStride) && ...
+                        isfinite(sliceStride) && sliceStride >= 1;
+        if ~isValidStride
+            dates = sliceStride;
+            sliceStride = [];
+        end
+    end
+
     if nargin < 3 || isempty(sliceStride)
         sliceStride = max(1, floor(size(W,1) / 40));
+    else
+        sliceStride = max(1, floor(double(sliceStride)));
     end
 
     if size(W,2) ~= 3
@@ -35,7 +53,12 @@ function plotWeightsChange(W, assetNames, sliceStride)
     W = W ./ rowSums;
 
     T = size(W, 1);
-    t = (1:T)';
+    x = (1:T)';
+    dateVec = [];
+    if ~isempty(dates)
+        dateVec = normalizeDates(dates, T);
+        x = datenum(dateVec);
+    end
 
     % Equilateral 2D simplex vertices in (y,z), mapped through barycentric weights.
     simplexYZ = [
@@ -45,7 +68,7 @@ function plotWeightsChange(W, assetNames, sliceStride)
     ];
 
     trajYZ = W * simplexYZ;
-    trajXYZ = [t, trajYZ];
+    trajXYZ = [x, trajYZ];
 
     sampleIdx = unique([1:sliceStride:T, T]);
     edgePairs = [1 2; 2 3; 3 1];
@@ -55,8 +78,8 @@ function plotWeightsChange(W, assetNames, sliceStride)
 
     % Draw translucent side panels between sampled simplex slices.
     for k = 1:numel(sampleIdx)-1
-        t1 = sampleIdx(k);
-        t2 = sampleIdx(k+1);
+        t1 = x(sampleIdx(k));
+        t2 = x(sampleIdx(k+1));
 
         for e = 1:size(edgePairs,1)
             i1 = edgePairs(e,1);
@@ -77,7 +100,7 @@ function plotWeightsChange(W, assetNames, sliceStride)
 
     % Draw simplex triangle outlines at sampled time slices.
     for k = 1:numel(sampleIdx)
-        tk = sampleIdx(k);
+        tk = x(sampleIdx(k));
         tri = [tk * ones(3,1), simplexYZ];
         patch('Vertices', tri, ...
               'Faces', [1 2 3], ...
@@ -97,14 +120,21 @@ function plotWeightsChange(W, assetNames, sliceStride)
 
     % Asset labels on first slice.
     labelOffset = 0.06;
-    text(1, simplexYZ(1,1), simplexYZ(1,2) + labelOffset, string(assetNames{1}), ...
+    text(x(1), simplexYZ(1,1), simplexYZ(1,2) + labelOffset, string(assetNames{1}), ...
          'FontWeight', 'bold', 'HorizontalAlignment', 'center');
-    text(1, simplexYZ(2,1) + labelOffset, simplexYZ(2,2) - labelOffset/2, string(assetNames{2}), ...
+    text(x(1), simplexYZ(2,1) + labelOffset, simplexYZ(2,2) - labelOffset/2, string(assetNames{2}), ...
          'FontWeight', 'bold', 'HorizontalAlignment', 'left');
-    text(1, simplexYZ(3,1) - labelOffset, simplexYZ(3,2) - labelOffset/2, string(assetNames{3}), ...
+    text(x(1), simplexYZ(3,1) - labelOffset, simplexYZ(3,2) - labelOffset/2, string(assetNames{3}), ...
          'FontWeight', 'bold', 'HorizontalAlignment', 'right');
 
-    xlabel('Time');
+    if isempty(dateVec)
+        xlabel('Time');
+    else
+        xlabel('Date');
+        xticks(x(sampleIdx));
+        xticklabels(cellstr(datestr(dateVec(sampleIdx), 'yyyy-mm-dd')));
+        xtickangle(45);
+    end
     ylabel('Simplex X');
     zlabel('Simplex Y');
     title('3-Asset Allocation Trajectory on the r=1 Simplex Tube');
@@ -113,4 +143,24 @@ function plotWeightsChange(W, assetNames, sliceStride)
     axis tight;
     box on;
     hold off;
+end
+
+function dateVec = normalizeDates(dates, T)
+    if isdatetime(dates)
+        dateVec = dates(:);
+    elseif isnumeric(dates)
+        dateVec = datetime(dates(:), 'ConvertFrom', 'datenum');
+    else
+        dateVec = datetime(dates(:));
+    end
+
+    if numel(dateVec) == T + 1
+        dateVec = dateVec(2:end);
+    end
+    if numel(dateVec) ~= T
+        error('dates must have length T or T+1 to match W.');
+    end
+    if any(isnat(dateVec))
+        error('dates contains invalid/NaT entries.');
+    end
 end
