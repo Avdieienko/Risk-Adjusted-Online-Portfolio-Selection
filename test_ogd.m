@@ -7,13 +7,14 @@ assets = {'CVX', 'T', 'INTC'};
 % Rebuild selected MAT files so each run starts from full CSV history.
 csvToMat("dataset", assets);
 
-[R, dates, P] = prepareDataset("dataset", assets, "01/02/2025", "01/30/2026");
+[R, dates, P] = prepareDataset("dataset", assets, "01/02/2021", "02/11/2026");
 
 eta0 = 0.2;
 out = ogd_portfolio_selection(R, eta0, @(w,r) logLossFuncGradient(w,r), []);
 
 reg = compute_and_plot_regret_logwealth(R, out.W, dates);
-plotWeightsChange(out.W, assets, 20, dates);
+% plotWeightsChange(out.W, assets, 20, dates);
+plotWeightsChangeSimplex(out.W, assets);
 %plot_regret_with_bounds(reg, dates);
 %plot_regret_with_all_bounds(reg, dates);
 

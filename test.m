@@ -45,33 +45,33 @@ hold on;
 plot3(vertices(:,1), vertices(:,2), vertices(:,3), ...
     'ko', 'MarkerSize', 8, 'MarkerFaceColor', 'black');
 
-% Test each point
-for i = 1:size(test_points, 1)
-    y = test_points(i, :)';
+% % Test each point
+% for i = 1:size(test_points, 1)
+%     y = test_points(i, :)';
 
-    % Project onto simplex
-    [x, mu, K] = simplexProjection(y);
+%     % Project onto simplex
+%     [x, mu, K] = simplexProjection(y);
 
-    % Print results
-    fprintf('Test %d:\n', i);
-    fprintf('  Input y    = [%.4f, %.4f, %.4f], sum = %.4f\n', y(1), y(2), y(3), sum(y));
-    fprintf('  Projected x = [%.4f, %.4f, %.4f], sum = %.4f\n', x(1), x(2), x(3), sum(x));
-    fprintf('  mu = %.4f, K = %d\n', mu, K);
-    fprintf('  Distance ||y - x|| = %.4f\n\n', norm(y - x));
+%     % Print results
+%     fprintf('Test %d:\n', i);
+%     fprintf('  Input y    = [%.4f, %.4f, %.4f], sum = %.4f\n', y(1), y(2), y(3), sum(y));
+%     fprintf('  Projected x = [%.4f, %.4f, %.4f], sum = %.4f\n', x(1), x(2), x(3), sum(x));
+%     fprintf('  mu = %.4f, K = %d\n', mu, K);
+%     fprintf('  Distance ||y - x|| = %.4f\n\n', norm(y - x));
 
-    % Plot original point
-    plot3(y(1), y(2), y(3), 'ro', 'MarkerSize', 10, 'MarkerFaceColor', 'red');
+%     % Plot original point
+%     plot3(y(1), y(2), y(3), 'ro', 'MarkerSize', 10, 'MarkerFaceColor', 'red');
 
-    % Plot projected point
-    plot3(x(1), x(2), x(3), 'go', 'MarkerSize', 10, 'MarkerFaceColor', 'green');
+%     % Plot projected point
+%     plot3(x(1), x(2), x(3), 'go', 'MarkerSize', 10, 'MarkerFaceColor', 'green');
 
-    % Draw line from original to projected point
-    plot3([y(1), x(1)], [y(2), x(2)], [y(3), x(3)], 'k--', 'LineWidth', 1.5);
+%     % Draw line from original to projected point
+%     plot3([y(1), x(1)], [y(2), x(2)], [y(3), x(3)], 'k--', 'LineWidth', 1.5);
 
-    % Add labels
-    text(y(1), y(2), y(3), sprintf('  y%d', i), 'Color', 'red', 'FontSize', 9);
-    text(x(1), x(2), x(3), sprintf('  x%d', i), 'Color', 'green', 'FontSize', 9);
-end
+%     % Add labels
+%     text(y(1), y(2), y(3), sprintf('  y%d', i), 'Color', 'red', 'FontSize', 9);
+%     text(x(1), x(2), x(3), sprintf('  x%d', i), 'Color', 'green', 'FontSize', 9);
+% end
 
 % Finalize plot
 axis equal;
