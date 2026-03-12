@@ -34,6 +34,7 @@ for i = 1:numEta
 end
 
 plotWeightsChangeSimplex(weightTrajectories, assets, arrayfun(@(e) sprintf('\\eta = %.2f', e), etaValues, 'UniformOutput', false));
+plotWeightsChange(weightTrajectories, assets, arrayfun(@(e) sprintf('\\eta = %.2f', e), etaValues, 'UniformOutput', false), 20, dates);
 
 figure;
 hold on;

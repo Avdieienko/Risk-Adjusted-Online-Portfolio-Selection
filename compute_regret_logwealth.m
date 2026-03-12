@@ -1,7 +1,6 @@
-function reg = compute_and_plot_regret_logwealth(R, W, dates)
+function reg = compute_regret_logwealth(R, W)
 % R: T x n price relatives (strictly > 0)
 % W: T x n weights used at each t
-% dates: optional datetime vector length T or T+1
 
     ensure_dependency_paths();
 
@@ -46,23 +45,6 @@ function reg = compute_and_plot_regret_logwealth(R, W, dates)
 
     % Regret: best fixed minus algorithm
     reg = best_cum - algo_cum;
-
-    % --- Plot ---
-    figure;
-    if nargin >= 3 && ~isempty(dates)
-        x = dates;
-        if numel(x) == T+1
-            x = x(2:end);
-        end
-        plot(x, reg, 'LineWidth', 2);
-        xlabel('Date');
-    else
-        plot(1:T, reg, 'LineWidth', 2);
-        xlabel('t');
-    end
-    ylabel('Regret (log-wealth)');
-    title(' Worst-case Regret vs Benchmark algorithm (log-loss)');
-    grid on;
 end
 
 function ensure_dependency_paths()

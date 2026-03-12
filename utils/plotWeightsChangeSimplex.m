@@ -1,75 +1,137 @@
-function plotWeightsChangeSimplex(weights, assetNames)
-%PLOTWEIGHTSCHANGESIMPLEX Plot weight trajectories on one 3D simplex plane.
-% ax = plotWeightsChangeSimplex(WSeries)
-% ax = plotWeightsChangeSimplex(WSeries, assetNames)
-% ax = plotWeightsChangeSimplex(WSeries, assetNames, seriesLabels)
-% ax = plotWeightsChangeSimplex(WSeries, assetNames, seriesLabels, gridStep)
+function plotWeightsChangeSimplex(weights, assetNames, trajLabels)
+%PLOTWEIGHTSCHANGESIMPLEX Plot one or more trajectories on a 3D simplex.
+% plotWeightsChangeSimplex(weights)
+% plotWeightsChangeSimplex(weights, assetNames)
 %
 % Inputs:
-%   WSeries      - T x 3, T x 3 x K, or 1xK cell array of T_k x 3 matrices
-%   assetNames   - optional 1x3 labels for vertices [x1, x2, x3]
-%   seriesLabels - optional labels for legend (one per trajectory)
-%   gridStep     - optional simplex grid spacing in (0,1), default 0.2
-%
-% Output:
-%   ax           - axes handle
-
+%   weights:
+%     - T x 3 numeric matrix (single trajectory), or
+%     - 1 x N / N x 1 cell array where each cell is T x 3 numeric, or
+%     - T x 3 x N numeric array (N trajectories)
+%   assetNames   - 1 x 3 labels for simplex axes
+%   trajLabels   - 1 x N labels for trajectories (optional)
     if nargin < 2 || isempty(assetNames)
         assetNames = {'X', 'Y', 'Z'};
+    end
+    if nargin < 3
+        trajLabels = arrayfun(@(k) sprintf('Trajectory %d', k), 1:numel(weights), 'UniformOutput', false);
     end
 
     if numel(assetNames) ~= 3
         error('assetNames must contain exactly 3 labels.');
     end
 
-    % Visualize the simplex
-    figure('Name', '3D Simplex Weight Trajectory', 'Position', [100, 100, 1000, 800]);
+    trajectories = normalizeTrajectories(weights);
+    numTraj = numel(trajectories);
+    colors = lines(numTraj);
+    startColor = [0.95, 0.85, 0.10]; % high-contrast yellow
+    endColor = [0.95, 0.20, 0.20];   % high-contrast red
 
-    % Define simplex vertices
+    figure('Name', '3D Simplex Weight Trajectories', 'Position', [100, 100, 1000, 800]);
+
+    % Define simplex vertices.
     vertices = [
-        0, 0, 0;    % Origin
-        1, 0, 0;    % X-axis
-        0, 1, 0;    % Y-axis
-        0, 0, 1     % Z-axis
-        ];
+        0, 0, 0;
+        1, 0, 0;
+        0, 1, 0;
+        0, 0, 1
+    ];
 
     faces = [
         1, 2, 3;
         1, 2, 4;
         1, 3, 4;
         2, 3, 4
-        ];
+    ];
 
-    % Plot the simplex
     hSimplex = patch('Vertices', vertices, 'Faces', faces, ...
         'FaceColor', 'cyan', 'FaceAlpha', 0.2, ...
-        'EdgeColor', 'blue', 'LineWidth', 2);
+        'EdgeColor', 'blue', 'LineWidth', 1.5, ...
+        'DisplayName', 'Simplex');
     hold on;
 
-    % Plot simplex vertices
     hVertices = plot3(vertices(:,1), vertices(:,2), vertices(:,3), ...
-        'ko', 'MarkerSize', 8, 'MarkerFaceColor', 'black');
+        'ko', 'MarkerSize', 8, 'MarkerFaceColor', 'black', ...
+        'DisplayName', 'Vertices');
 
+    hTraj = gobjects(numTraj, 1);
+    hStart = gobjects(numTraj, 1);
+    hEnd = gobjects(numTraj, 1);
 
-    % Plot trajectory through the simplex by connecting consecutive weights.
-    hTrajectory = plot3(weights(:,1), weights(:,2), weights(:,3), ...
-        'r-', 'LineWidth', 1.5);
+    for k = 1:numTraj
+        W = trajectories{k};
+        c = colors(k, :);
 
-    hStart = plot3(weights(1,1), weights(1,2), weights(1,3), ...
-        'ro', 'MarkerSize', 6, 'MarkerFaceColor', 'black');
-    hEnd = plot3(weights(end,1), weights(end,2), weights(end,3), ...
-        'ro', 'MarkerSize', 6, 'MarkerFaceColor', 'green');
+        hTraj(k) = plot3(W(:,1), W(:,2), W(:,3), '-', ...
+            'Color', c, 'LineWidth', 1.8, ...
+            'DisplayName', trajLabels{k});
 
-    % Finalize plot
+        startName = '';
+        endName = '';
+        if k == 1
+            startName = 'Start';
+            endName = 'End';
+        end
+
+        hStart(k) = plot3(W(1,1), W(1,2), W(1,3), 'o', ...
+            'Color', startColor, 'MarkerSize', 8, ...
+            'MarkerFaceColor', startColor, 'MarkerEdgeColor', 'black', ...
+            'LineWidth', 1.0, ...
+            'DisplayName', startName);
+        hEnd(k) = plot3(W(end,1), W(end,2), W(end,3), 's', ...
+            'Color', endColor, 'MarkerSize', 8, ...
+            'MarkerFaceColor', endColor, 'MarkerEdgeColor', 'black', ...
+            'LineWidth', 1.0, ...
+            'DisplayName', endName);
+
+        if k > 1
+            set(hStart(k), 'HandleVisibility', 'off');
+            set(hEnd(k), 'HandleVisibility', 'off');
+        end
+    end
+
     axis equal;
     grid on;
-    xlabel(assetNames{1});
-    ylabel(assetNames{2});
-    zlabel(assetNames{3});
-    title('Simplex Weight Trajectory');
-    legend([hSimplex, hVertices, hTrajectory, hStart, hEnd], ...
-        {'Simplex', 'Vertices', 'Weight Path', 'Start', 'End'});
+    xlabel(string(assetNames{1}));
+    ylabel(string(assetNames{2}));
+    zlabel(string(assetNames{3}));
+    title('Simplex Weight Trajectories');
+    legend([hSimplex, hVertices, hTraj(:).', hStart(1), hEnd(1)], ...
+        'Location', 'best');
     view(45, 30);
     rotate3d on;
-
     hold off;
+end
+
+function trajectories = normalizeTrajectories(weights)
+    if isnumeric(weights)
+        if ismatrix(weights)
+            trajectories = {weights};
+        elseif ndims(weights) == 3 && size(weights,2) == 3
+            nTraj = size(weights, 3);
+            trajectories = cell(1, nTraj);
+            for k = 1:nTraj
+                trajectories{k} = weights(:, :, k);
+            end
+        else
+            error(['weights must be T x 3, a cell array of T x 3 matrices, ' ...
+                'or T x 3 x N.']);
+        end
+    elseif iscell(weights)
+        trajectories = weights;
+    else
+        error(['weights must be T x 3, a cell array of T x 3 matrices, ' ...
+            'or T x 3 x N.']);
+    end
+
+    if isempty(trajectories)
+        error('weights must contain at least one trajectory.');
+    end
+
+    for k = 1:numel(trajectories)
+        W = trajectories{k};
+        if ~(isnumeric(W) && ismatrix(W) && size(W,2) == 3 && size(W,1) >= 1)
+            error('Trajectory %d must be a numeric T x 3 matrix with T >= 1.', k);
+        end
+    end
+end
