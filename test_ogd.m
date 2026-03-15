@@ -7,7 +7,11 @@ assets = {'CVX', 'T', 'INTC'};
 % Rebuild selected MAT files so each run starts from full CSV history.
 csvToMat("dataset", assets);
 
-[R, dates, ~] = prepareDataset("dataset", assets, "08/02/2025", "02/11/2026");
+dataset = prepareDataset("dataset");
+[trimmedDataset, R, dates, ~] = prepareTrimmedDataset(dataset, assets, "08/02/2025", "02/11/2026");
+
+assert(all(isKey(dataset, assets)), 'prepareDataset should preload the requested assets.');
+assert(numel(trimmedDataset('CVX').R) == size(R, 1), 'Trimmed per-asset series must match aligned matrix rows.');
 
 etaValues = [0.05, 0.2, 0.4, 1];
 numEta = numel(etaValues);

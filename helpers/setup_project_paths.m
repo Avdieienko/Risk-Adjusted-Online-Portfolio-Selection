@@ -9,7 +9,7 @@ function rootDir = setup_project_paths()
     addpath(rootDir);
     addpath(thisDir);
 
-    coreDirs = {'ftl', 'helpers', 'bcrp', 'utils'};
+    coreDirs = {'ftl', 'helpers', 'bcrp', 'utils', 'tests', 'buy&hold', 'tests', 'loss_functions', 'eta_update_functions'};
     for i = 1:numel(coreDirs)
         d = fullfile(rootDir, coreDirs{i});
         if isfolder(d)
